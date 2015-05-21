@@ -164,6 +164,7 @@ class Dest:
     def __init__(self, d={}, validate=False):
         self.ip_ = d.get('ip', None)
         self.weight_ = d.get('weight', None)
+        self.port_ = d.get('port', None)
 
     def __repr__(self):
         return 'Dest(d=dict(ip="%s", weight=%d))' % (self.ip(), self.weight())
@@ -173,6 +174,9 @@ class Dest:
 
     def weight(self):
         return self.weight_
+
+    def port(self):
+        return self.port_
 
     def validate(self):
         assert _validate_ip(self.ip_)
@@ -199,6 +203,7 @@ class Dest:
                 'ip': _from_af_union(lst.get('af', default_af),
                                      lst.get('addr')),
                 'weight': lst.get('weight'),
+                'port': lst.get('port'),
             },
             validate=True,
         )
