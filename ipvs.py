@@ -155,7 +155,7 @@ def _from_proto_num(n):
     else:
         assert False, 'unknown proto num %d' % n
 
-class Dest:
+class Dest(object):
     """Describes a real server to be load balanced to.  We're just going to
     have ip and weight and assume that everyone is using tunneling
     encapsulation.
@@ -208,7 +208,7 @@ class Dest:
             validate=True,
         )
 
-class Service:
+class Service(object):
     """Describes a load balanced service.
     """
 
@@ -294,7 +294,7 @@ class Service:
             d = dict(fwmark=lst.get('fwmark'), sched=lst.get('sched_name'))
         return Service(d=d, validate=True)
 
-class Pool:
+class Pool(object):
     """A tuple of a service and an array of dests for that service
     """
 
@@ -333,7 +333,7 @@ class Pool:
     def load_pools_from_json_list(lst):
         return [Pool(i, True) for i in lst]
 
-class IpvsClient:
+class IpvsClient(object):
     """A python client to use instead of shelling out to ipvsadm
     """
 

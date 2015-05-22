@@ -90,6 +90,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import array
+import errno
 import logging
 import os
 import socket
@@ -99,7 +100,7 @@ import threading
 
 _unset = lambda x: x ** 2
 
-class MessageFlags:
+class MessageFlags(object):
     REQUEST = 1
     MULTI = 2
     ACK = 4
@@ -139,15 +140,15 @@ U64Type = create_struct_fmt_type('=Q')
 Net16Type = create_struct_fmt_type('!H')
 Net32Type = create_struct_fmt_type('!I')
 
-class RecursiveSelf:
+class RecursiveSelf(object):
     pass
 
-class IgnoreType:
+class IgnoreType(object):
     @staticmethod
     def unpack(val):
         return None
 
-class BinaryType:
+class BinaryType(object):
     @staticmethod
     def pack(val):
         return val
@@ -156,7 +157,7 @@ class BinaryType:
     def unpack(val):
         return val
 
-class NulStringType:
+class NulStringType(object):
     @staticmethod
     def pack(val):
         return val + '\0'
@@ -166,7 +167,7 @@ class NulStringType:
         assert val[-1] == '\0'
         return val[:-1]
 
-class AttrListPacker:
+class AttrListPacker(object):
     pass
 
 def create_attr_list_type(class_name, *fields):
@@ -409,7 +410,7 @@ CtrlMessage = create_genl_message_type(
 )
 
 @message_class
-class ErrorMessage:
+class ErrorMessage(object):
     family = 2
 
     def __init__(self, error, msg):
@@ -419,6 +420,14 @@ class ErrorMessage:
     def __repr__(self):
         return 'ErrorMessage(error=%s, msg=%s)' % (
             repr(self.error), repr(self.msg))
+
+    def __str__(self):
+        try:
+            error_str = '%s: %s' % (errno.errorcode[-self.error],
+                                    os.strerror(-self.error))
+        except KeyError:
+            error_str = str(self.error)
+        return '%s. Extra info: %s' % (error_str, self.msg)
 
     @staticmethod
     def unpack(data):
@@ -430,7 +439,7 @@ class ErrorMessage:
         return ErrorMessage(error=error, msg=msg)
 
 @message_class
-class DoneMessage:
+class DoneMessage(object):
     family = 3
 
     def __init__(self):
@@ -445,7 +454,7 @@ class DoneMessage:
     def pack():
         return '\0\0\0\0'
 
-class NetlinkSocket:
+class NetlinkSocket(object):
     def __init__(self, verbose=False):
         # NETLINK_GENERIC = 16
         self.sock = socket.socket(socket.AF_NETLINK, socket.SOCK_DGRAM, 16)
@@ -492,14 +501,15 @@ class NetlinkSocket:
                 self._send(request)
                 messages = self._recv()
                 for message in messages:
-                    assert not isinstance(message, ErrorMessage)
+                    if isinstance(message, ErrorMessage):
+                        raise RuntimeError(str(message))
                 return messages
             except Exception as e:
                 if self.verbose:
                     logging.error("Netlink query failed: %s" % e)
                     logging.error("Sent Request: %s" % request)
                     logging.error("Recv Messages: %s" % messages)
-                raise e
+                raise
 
     def execute(self, request):
         with self.lock:
@@ -516,4 +526,4 @@ class NetlinkSocket:
                     logging.error("Netlink execute failed: %s" % e)
                     logging.error("Sent Request: %s" % request)
                     logging.error("Recv Messages: %s" % messages)
-                raise e
+                raise

@@ -13,6 +13,7 @@ python_binary(
     deps=[
         '@/gnlpy:ipvs',
     ],
+    py_version = '>=2.7',
     main_module='gnlpy.examples.ipvs_dump',
 )
 
@@ -24,5 +25,6 @@ python_binary(
     deps=[
         '@/gnlpy:taskstats',
     ],
+    py_version = '>=2.7',
     main_module='gnlpy.examples.taskstats_dump',
 )

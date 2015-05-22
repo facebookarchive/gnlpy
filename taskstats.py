@@ -25,31 +25,33 @@ import gnlpy.netlink as netlink
 # kernel via netlink.  These structures must match the type and ordering
 # that the kernel expects.
 
-class Taskstats:
-    fields = ['version', 'exitcode', 'flag', 'nice', 'cpu_count',
-              'cpu_delay_total', 'blkio_count', 'blkio_delay_total',
-              'swapin_count', 'swapin_delay_total',
-              'cpu_run_real_total', 'cpu_run_virtual_total', 'comm',
-              'sched', 'uid', 'gid', 'pid', 'ppid', 'btime', 'etime',
-              'utime', 'stime', 'minflt', 'majflt', 'coremem',
-              'virtmem', 'hiwater_rss', 'hiwater_vm', 'read_char',
-              'write_char', 'read_syscalls', 'write_syscalls',
-              'read_bytes', 'write_bytes', 'cancelled_write_bytes',
-              'nvcsw', 'nivcsw', 'utimescaled', 'stimescaled',
-              'cpu_scaled_run_real_total', 'freepages_count',
-              'freepages_delay_total']
+class Taskstats(object):
+    __fields__ = [
+        'version', 'exitcode', 'flag', 'nice', 'cpu_count',
+        'cpu_delay_total', 'blkio_count', 'blkio_delay_total',
+        'swapin_count', 'swapin_delay_total',
+        'cpu_run_real_total', 'cpu_run_virtual_total', 'comm',
+        'sched', 'uid', 'gid', 'pid', 'ppid', 'btime', 'etime',
+        'utime', 'stime', 'minflt', 'majflt', 'coremem',
+        'virtmem', 'hiwater_rss', 'hiwater_vm', 'read_char',
+        'write_char', 'read_syscalls', 'write_syscalls',
+        'read_bytes', 'write_bytes', 'cancelled_write_bytes',
+        'nvcsw', 'nivcsw', 'utimescaled', 'stimescaled',
+        'cpu_scaled_run_real_total', 'freepages_count',
+        'freepages_delay_total'
+    ]
 
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
     def __repr__(self):
-        arr = ['%s=%s' % (f, repr(self.__dict__[f])) for f in self.fields]
+        arr = ['%s=%s' % (f, repr(self.__dict__[f])) for f in self.__fields__]
         return 'TaskStats(%s)' % ', '.join(arr)
 
     @staticmethod
     def unpack(val):
         fmt = 'HIBBQQQQQQQQ32sQxxxIIIIIQQQQQQQQQQQQQQQQQQQQQQQ'
-        attrs = dict(zip(Taskstats.fields, struct.unpack(fmt, val)))
+        attrs = dict(zip(Taskstats.__fields__, struct.unpack(fmt, val)))
         assert attrs['version'] == 8, "Bad version: %d" % attrs["version"]
         attrs['comm'] = attrs['comm'].rstrip('\0')
         return Taskstats(**attrs)
@@ -79,7 +81,7 @@ TaskstatsMessage = netlink.create_genl_message_type(
     required_modules=[],
 )
 
-class TaskstatsClient:
+class TaskstatsClient(object):
     """A python client to interact with taskstats
     """
 
