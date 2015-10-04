@@ -19,6 +19,12 @@ import socket
 import struct
 import gnlpy.netlink as netlink
 
+# IPVS forwarding methods
+IPVS_MASQUERADING = 0
+IPVS_LOCAL = 1
+IPVS_TUNNELING = 2
+IPVS_ROUTING = 3
+
 # These are attr_list_types which are nestable.  The command attribute list
 # is ultimately referenced by the messages which are passed down to the
 # kernel via netlink.  These structures must match the type and ordering
@@ -419,16 +425,16 @@ class IpvsClient(object):
         self.nlsock.execute(out_msg)
 
     @verbose
-    def add_dest(self, vip, port, rip, protocol=socket.IPPROTO_TCP, weight=1):
+    def add_dest(self, vip, port, rip, protocol=socket.IPPROTO_TCP, weight=1, method=IPVS_TUNNELING):
         self.__modify_dest('new_dest', vip, port, rip,
                            protocol=protocol, weight=weight,
-                           fwd_method=2, l_thresh=0, u_thresh=0)
+                           fwd_method=method, l_thresh=0, u_thresh=0)
 
     @verbose
     def update_dest(self, vip, port, rip, protocol=socket.IPPROTO_TCP,
-                    weight=None):
+                    weight=None, method=IPVS_TUNNELING):
         self.__modify_dest('set_dest', vip, port, rip, protocol, weight=weight,
-                           l_thresh=0, u_thresh=0, fwd_method=2)
+                           l_thresh=0, u_thresh=0, fwd_method=method)
 
     @verbose
     def del_dest(self, vip, port, rip, protocol=socket.IPPROTO_TCP):
