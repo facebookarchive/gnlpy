@@ -25,6 +25,13 @@ IPVS_LOCAL = 1
 IPVS_TUNNELING = 2
 IPVS_ROUTING = 3
 
+IPVS_METHODS = set([
+    IPVS_MASQUERADING,
+    IPVS_LOCAL,
+    IPVS_TUNNELING,
+    IPVS_ROUTING
+])
+
 # These are attr_list_types which are nestable.  The command attribute list
 # is ultimately referenced by the messages which are passed down to the
 # kernel via netlink.  These structures must match the type and ordering
@@ -162,15 +169,13 @@ def _from_proto_num(n):
         assert False, 'unknown proto num %d' % n
 
 class Dest(object):
-    """Describes a real server to be load balanced to.  We're just going to
-    have ip and weight and assume that everyone is using tunneling
-    encapsulation.
-    """
+    """Describes a real server to be load balanced to."""
 
     def __init__(self, d={}, validate=False):
         self.ip_ = d.get('ip', None)
         self.weight_ = d.get('weight', None)
         self.port_ = d.get('port', None)
+        self.fwd_method_ = d.get('fwd_method', IPVS_TUNNELING)
 
     def __repr__(self):
         return 'Dest(d=dict(ip="%s", weight=%d))' % (self.ip(), self.weight())
@@ -184,11 +189,14 @@ class Dest(object):
     def port(self):
         return self.port_
 
+    def fwd_method(self):
+        return self.fwd_method_
+
     def validate(self):
         assert _validate_ip(self.ip_)
-
         assert isinstance(self.weight_, int)
         assert self.weight_ >= -1
+        assert self.fwd_method_ in IPVS_METHODS
 
     def to_dict(self):
         return {
@@ -210,6 +218,7 @@ class Dest(object):
                                      lst.get('addr')),
                 'weight': lst.get('weight'),
                 'port': lst.get('port'),
+                'fwd_method': lst.get('fwd_method')
             },
             validate=True,
         )
