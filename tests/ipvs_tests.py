@@ -7,9 +7,8 @@ from __future__ import unicode_literals
 
 from gnlpy.ipvs import IpvsClient
 
-import errno
-import os
 import unittest
+
 
 class TestAddingDest(unittest.TestCase):
 
@@ -23,6 +22,9 @@ class TestAddingDest(unittest.TestCase):
 
         # delete
         self.client.del_dest('1.1.1.1', 80, '2.2.2.1')
+
+        dests = self.client.get_pools()[0].dests()
+        self.assertTrue(dests[0].ip() == '2.2.2.2')
 
     def setUp(self):
         '''
