@@ -51,6 +51,20 @@ IpvsStatsAttrList = netlink.create_attr_list_type(
     ('OUTBPS', netlink.U32Type),
 )
 
+IpvsStatsAttrList64 = netlink.create_attr_list_type(
+    'IpvsStatsAttrList64',
+    ('CONNS', netlink.U64Type),
+    ('INPKTS', netlink.U64Type),
+    ('OUTPKTS', netlink.U64Type),
+    ('INBYTES', netlink.U64Type),
+    ('OUTBYTES', netlink.U64Type),
+    ('CPS', netlink.U64Type),
+    ('INPPS', netlink.U64Type),
+    ('OUTPPS', netlink.U64Type),
+    ('INBPS', netlink.U64Type),
+    ('OUTBPS', netlink.U64Type),
+)
+
 IpvsServiceAttrList = netlink.create_attr_list_type(
     'IpvsServiceAttrList',
     ('AF', netlink.U16Type),
@@ -64,6 +78,7 @@ IpvsServiceAttrList = netlink.create_attr_list_type(
     ('NETMASK', netlink.U32Type),
     ('STATS', IpvsStatsAttrList),
     ('PE_NAME', netlink.NulStringType),
+    ('STATS64', IpvsStatsAttrList64),
 )
 
 IpvsDestAttrList = netlink.create_attr_list_type(
@@ -79,6 +94,7 @@ IpvsDestAttrList = netlink.create_attr_list_type(
     ('PERSIST_CONNS', netlink.U32Type),
     ('STATS', IpvsStatsAttrList),
     ('ADDR_FAMILY', netlink.U16Type),
+    ('STATS64', IpvsStatsAttrList64),
 )
 
 IpvsDaemonAttrList = netlink.create_attr_list_type(
