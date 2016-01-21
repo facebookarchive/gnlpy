@@ -230,7 +230,7 @@ class Dest(object):
     def from_attr_list(lst, default_af=None):
         return Dest(
             d={
-                'ip': _from_af_union(lst.get('af', default_af),
+                'ip': _from_af_union(lst.get('addr_family', default_af),
                                      lst.get('addr')),
                 'weight': lst.get('weight'),
                 'port': lst.get('port'),
