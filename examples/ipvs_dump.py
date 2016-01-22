@@ -16,10 +16,13 @@ import re
 import socket
 from gnlpy.ipvs import IpvsClient
 
+
 def ip_string_eq(ip1, ip2):
-    fam = lambda ip: socket.AF_INET6 if ':' in ip else socket.AF_INET
+    def fam(ip):
+        return socket.AF_INET6 if ':' in ip else socket.AF_INET
     f1, f2 = fam(ip1), fam(ip2)
     return f1 == f2 and socket.inet_pton(f1, ip1) == socket.inet_pton(f2, ip2)
+
 
 def match_arg(s, ip, port):
     m = re.match(r"^\[([a-fA-F0-9:]+)\]:(\d+)$", s)
@@ -33,6 +36,7 @@ def match_arg(s, ip, port):
         return ip_string_eq(m.group(1), ip)
 
     raise Exception("malformed address: " + s)
+
 
 def main(argv):
     parser = argparse.ArgumentParser()

@@ -14,6 +14,7 @@ import argparse
 import sys
 from gnlpy.taskstats import TaskstatsClient
 
+
 def main(argv):
     parser = argparse.ArgumentParser(
         description='Show task information. Run as root.')
