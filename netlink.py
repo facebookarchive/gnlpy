@@ -98,7 +98,10 @@ import struct
 import subprocess
 import threading
 
-_unset = lambda x: x ** 2
+
+def _unset(x):
+    return x ** 2
+
 
 class MessageFlags(object):
     REQUEST = 1
@@ -120,6 +123,7 @@ class MessageFlags(object):
     ACK_REQUEST = (REQUEST | ACK)
     MATCH_ROOT_REQUEST = (MATCH | ROOT | REQUEST)
 
+
 def create_struct_fmt_type(fmt):
     class StructFmtType:
         @staticmethod
@@ -140,13 +144,16 @@ U64Type = create_struct_fmt_type('=Q')
 Net16Type = create_struct_fmt_type('!H')
 Net32Type = create_struct_fmt_type('!I')
 
+
 class RecursiveSelf(object):
     pass
+
 
 class IgnoreType(object):
     @staticmethod
     def unpack(val):
         return None
+
 
 class BinaryType(object):
     @staticmethod
@@ -156,6 +163,7 @@ class BinaryType(object):
     @staticmethod
     def unpack(val):
         return val
+
 
 class NulStringType(object):
     @staticmethod
@@ -167,8 +175,10 @@ class NulStringType(object):
         assert val[-1] == '\0'
         return val[:-1]
 
+
 class AttrListPacker(object):
     pass
+
 
 def create_attr_list_type(class_name, *fields):
     """Create a new attr_list_type which is a class offering get and set
@@ -253,6 +263,7 @@ def create_attr_list_type(class_name, *fields):
 
     return AttrListType
 
+
 def create_genl_message_type(class_name, family_id_or_name, *fields,
                              **kwargs):
     """Create a new genl_message_type which is a class offering the appropriate
@@ -328,6 +339,7 @@ __cmd_unpack_map = {
 }
 __to_lookup_on_init = set()
 
+
 def message_class(msg_class):
     if msg_class.family in __cmd_unpack_map:
         return
@@ -341,6 +353,7 @@ def message_class(msg_class):
 
     return msg_class
 
+
 def setup_message_classes(nlsock):
     for msg_class in __to_lookup_on_init:
         if not isinstance(msg_class.family, int):
@@ -351,6 +364,7 @@ def setup_message_classes(nlsock):
         for mod in getattr(msg_class, 'required_modules', []):
             subprocess.check_call(['modprobe', mod])
 
+
 def deserialize_message(data):
     (n, typ, flags, seq, pid) = struct.unpack(str('=IHHII'), data[:16])
     if typ not in __cmd_unpack_map:
@@ -358,6 +372,7 @@ def deserialize_message(data):
     msg = __cmd_unpack_map[typ].unpack(data[16:n])
     msg.flags = flags
     return msg, data[n:]
+
 
 def serialize_message(msg, port_id, seq):
     family = msg.__class__.family
@@ -409,6 +424,7 @@ CtrlMessage = create_genl_message_type(
     ('GETMCAST_GRP', None),
 )
 
+
 @message_class
 class ErrorMessage(object):
     family = 2
@@ -438,6 +454,7 @@ class ErrorMessage(object):
             msg = None
         return ErrorMessage(error=error, msg=msg)
 
+
 @message_class
 class DoneMessage(object):
     family = 3
@@ -453,6 +470,7 @@ class DoneMessage(object):
     @staticmethod
     def pack():
         return '\0\0\0\0'
+
 
 class NetlinkSocket(object):
     def __init__(self, verbose=False):
@@ -482,7 +500,8 @@ class NetlinkSocket(object):
     def _recv(self):
         messages = []
         while True:
-            # a big buffer to avoid truncating message. The size is borrowed from libnetlink
+            # A big buffer to avoid truncating message.
+            # The size is borrowed from libnetlink.
             data = self.sock.recv(16384)
             while len(data) > 0:
                 msg, data = deserialize_message(data)

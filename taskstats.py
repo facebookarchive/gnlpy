@@ -25,6 +25,7 @@ import gnlpy.netlink as netlink
 # kernel via netlink.  These structures must match the type and ordering
 # that the kernel expects.
 
+
 class Taskstats(object):
     __fields__ = [
         'version', 'exitcode', 'flag', 'nice', 'cpu_count',
@@ -80,6 +81,7 @@ TaskstatsMessage = netlink.create_genl_message_type(
     ('NEW', TaskstatsType),
     required_modules=[],
 )
+
 
 class TaskstatsClient(object):
     """A python client to interact with taskstats

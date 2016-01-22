@@ -143,6 +143,7 @@ IpvsMessage = netlink.create_genl_message_type(
     required_modules=['ip_vs'],
 )
 
+
 def verbose(f):
     def g(self, *args, **kwargs):
         if self.verbose:
@@ -153,6 +154,7 @@ def verbose(f):
         return f(self, *args, **kwargs)
     return g
 
+
 def _validate_ip(ip):
     try:
         socket.inet_pton(socket.AF_INET6 if ':' in ip else socket.AF_INET, ip)
@@ -160,13 +162,16 @@ def _validate_ip(ip):
     except socket.error:
         return False
 
+
 def _to_af_union(ip):
     af = socket.AF_INET6 if ':' in ip else socket.AF_INET
     return af, socket.inet_pton(af, ip).ljust(16, str('\0'))
 
+
 def _from_af_union(af, addr):
     n = 4 if af == socket.AF_INET else 16
     return socket.inet_ntop(af, addr[:n])
+
 
 def _to_proto_num(proto):
     if proto.lower() == 'tcp':
@@ -176,6 +181,7 @@ def _to_proto_num(proto):
     else:
         assert False, 'unknown proto %s' % proto
 
+
 def _from_proto_num(n):
     if n == socket.IPPROTO_TCP:
         return 'tcp'
@@ -183,6 +189,7 @@ def _from_proto_num(n):
         return 'udp'
     else:
         assert False, 'unknown proto num %d' % n
+
 
 class Dest(object):
     """Describes a real server to be load balanced to."""
@@ -238,6 +245,7 @@ class Dest(object):
             },
             validate=True,
         )
+
 
 class Service(object):
     """Describes a load balanced service.
@@ -325,6 +333,7 @@ class Service(object):
             d = dict(fwmark=lst.get('fwmark'), sched=lst.get('sched_name'))
         return Service(d=d, validate=True)
 
+
 class Pool(object):
     """A tuple of a service and an array of dests for that service
     """
@@ -363,6 +372,7 @@ class Pool(object):
     @staticmethod
     def load_pools_from_json_list(lst):
         return [Pool(i, True) for i in lst]
+
 
 class IpvsClient(object):
     """A python client to use instead of shelling out to ipvsadm
@@ -450,7 +460,8 @@ class IpvsClient(object):
         self.nlsock.execute(out_msg)
 
     @verbose
-    def add_dest(self, vip, port, rip, protocol=socket.IPPROTO_TCP, weight=1, method=IPVS_TUNNELING):
+    def add_dest(self, vip, port, rip,
+                 protocol=socket.IPPROTO_TCP, weight=1, method=IPVS_TUNNELING):
         self.__modify_dest('new_dest', vip, port, rip,
                            protocol=protocol, weight=weight,
                            fwd_method=method, l_thresh=0, u_thresh=0)
