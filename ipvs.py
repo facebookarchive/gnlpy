@@ -174,6 +174,8 @@ def _from_af_union(af, addr):
 
 
 def _to_proto_num(proto):
+    if proto is None:
+        return None
     if proto.lower() == 'tcp':
         return socket.IPPROTO_TCP
     elif proto.lower() == 'udp':
@@ -183,6 +185,8 @@ def _to_proto_num(proto):
 
 
 def _from_proto_num(n):
+    if n is None:
+        return None
     if n == socket.IPPROTO_TCP:
         return 'tcp'
     elif n == socket.IPPROTO_UDP:
