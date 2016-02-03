@@ -99,7 +99,12 @@ import subprocess
 import threading
 
 
-def _unset(x):
+def _unset(x):  # pragma: no cover
+    '''
+    Dummy function used in the code to find out if a default was set.
+    Using this function as a default allows to differenciate between a default
+    value of None and a default that was not set.
+    '''
     return x ** 2
 
 
@@ -166,6 +171,10 @@ class BinaryType(object):
 
 
 class NulStringType(object):
+    '''
+    Ensure the string is null terminated when packing and remove the trailing
+    \0 when unpacking.
+    '''
     @staticmethod
     def pack(val):
         return val + '\0'
