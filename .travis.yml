@@ -5,7 +5,7 @@ python:
   - "2.7"
 install:
   - pip install .
-  - pip install flake8 coverage
+  - pip install flake8 coverage mock
   - sudo modprobe ip_vs
 script:
   - flake8 .

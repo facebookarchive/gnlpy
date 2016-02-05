@@ -52,6 +52,8 @@ So, for this all to work, we must create attribute lists that know how to
 pack and unpack their values, and messages that know what type of attribute
 lists they have.  This is accomplished with create_attr_list_type and
 create_genl_message_type.
+In some cases, some messages may not be supported when called from userland. In
+such case, provide a attribute list of None.
 
 Usage:
 
@@ -71,7 +73,8 @@ Usage:
     Msg = netlink.create_genl_message_type(
         'Msg', 'SPECIFIED_KERNEL_NAME',
         ('COMMAND_1', ListA),
-        ('COMMAND_1', ListB),
+        ('COMMAND_2', None),  # COMMAND_2 is not available via userland.
+        ('COMMAND_3', ListB),
     )
 
 And at this point, you can begin sending and receiving `Msg`es to a netlink
@@ -314,7 +317,8 @@ def create_genl_message_type(class_name, family_id_or_name, *fields,
             self.flags = flags
 
             if attr_list is _unset:
-                self.attr_list = key_to_attr_list_type[self.cmd]()
+                kls = key_to_attr_list_type[self.cmd]
+                self.attr_list = kls is not None and kls() or kls
             else:
                 self.attr_list = attr_list
 
@@ -350,10 +354,10 @@ __to_lookup_on_init = set()
 
 
 def message_class(msg_class):
-    if msg_class.family in __cmd_unpack_map:
-        return
-    if msg_class in __to_lookup_on_init:
-        return
+    assert msg_class.family not in __cmd_unpack_map, \
+        'Message class %d is already defined' % msg_class.family
+    assert msg_class.family not in [x.family for x in __to_lookup_on_init], \
+        'Message class %s is already defined' % msg_class.family
 
     if not isinstance(msg_class.family, int):
         __to_lookup_on_init.add(msg_class)
@@ -422,6 +426,7 @@ CtrlAttrList = create_attr_list_type(
 CtrlMessage = create_genl_message_type(
     'CtrlMessage',
     16,
+    # NEWFAMILY message is returned in response to a GETFAMILY request.
     ('NEWFAMILY', CtrlAttrList),
     ('DELFAMILY', None),
     ('GETFAMILY', CtrlAttrList),
@@ -542,6 +547,7 @@ class NetlinkSocket(object):
     def execute(self, request):
         with self.lock:
             try:
+                messages = None
                 self._send(request)
                 messages = self._recv()
                 assert len(messages) == 1
