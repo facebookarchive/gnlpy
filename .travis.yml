@@ -3,9 +3,11 @@ sudo: required
 dist: trusty
 python:
   - "2.7"
+  - "3.5"
 install:
+  - pip install -r requirements.txt
   - pip install .
-  - pip install flake8 coverage mock
+  - pip install flake8 coverage
   - sudo modprobe ip_vs
 script:
   - flake8 .

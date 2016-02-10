@@ -15,6 +15,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import six
 import socket
 import struct
 import gnlpy.netlink as netlink
@@ -149,7 +150,7 @@ def verbose(f):
         if self.verbose:
             s_args = [repr(a) for a in args]
             s_args.extend(['{0}={1}'.format(k, repr(v))
-                           for k, v in kwargs.items()])
+                           for k, v in six.iteritems(kwargs)])
             print('{0}({1})'.format(f.__name__, ', '.join(s_args)))
         return f(self, *args, **kwargs)
     return g
@@ -169,7 +170,7 @@ def _to_af(ip):
 
 def _to_af_union(ip):
     af = _to_af(ip)
-    return af, socket.inet_pton(af, ip).ljust(16, str('\0'))
+    return af, socket.inet_pton(af, ip).ljust(16, b'\0')
 
 
 def _from_af_union(af, addr):
