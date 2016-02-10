@@ -9,6 +9,7 @@ from gnlpy.ipvs import IpvsClient
 from gnlpy import ipvs
 
 import json
+import six
 import socket
 import unittest
 
@@ -181,7 +182,7 @@ class TestAddingDest(BaseIpvsTestCase):
         }
         self.client.add_service('1.1.1.1', 80)
         self.client.add_dest('1.1.1.1', 80, '2.2.2.1')
-        for k, v in dest_methods.items():
+        for k, v in six.iteritems(dest_methods):
             self.client.add_dest('1.1.1.1', 80, k, method=v)
 
         dests = self.client.get_pools()[0].dests()
@@ -384,7 +385,7 @@ class TestHelperFunc(unittest.TestCase):
             '1.1.1.1': True,
             '323.1.1.1': False,
         }
-        for k, v in items.iteritems():
+        for k, v in six.iteritems(items):
             self.assertEqual(
                 ipvs._validate_ip(k), v,
                 '%s valid IP: %s' % (k, not v)
@@ -401,7 +402,7 @@ class TestHelperFunc(unittest.TestCase):
             None: None,
         }
 
-        for k, v in h.iteritems():
+        for k, v in six.iteritems(h):
             self.assertEqual(
                 ipvs._to_proto_num(k), v,
                 '{0} is not matching the right proto num {1}'.format(k, v))
@@ -416,7 +417,7 @@ class TestHelperFunc(unittest.TestCase):
             None: None,
         }
 
-        for k, v in h.iteritems():
+        for k, v in six.iteritems(h):
             self.assertEqual(
                 ipvs._from_proto_num(k), v,
                 'proto num {0} is not matching {1}'.format(k, v))
