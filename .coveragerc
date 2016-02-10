@@ -1,0 +1,12 @@
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+
+[run]
+omit =
+    *mock*
+    *six.py
+    *gnlpy.py
+    *pbr*
+    *funcsigs*
