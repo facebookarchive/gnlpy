@@ -211,6 +211,37 @@ class TestAddingDest(BaseIpvsTestCase):
                 'Service port {1}.'.format(dest.port(), service.port())
             )
 
+    def test_dest_diff_port(self):
+        self.client.add_service('1.1.1.1', 80)
+        self.client.add_dest('1.1.1.1', 80, '2.2.2.1', 8080)
+        self.client.add_dest('1.1.1.1', 80, '2.2.2.2', 8080, weight=100)
+
+        dests = self.client.get_pools()[0].dests()
+        for dest in dests:
+            self.assertEqual(
+                dest.port(),
+                8080,
+                'Destination port {0} should be set '
+                'to specified value {1}'.format(dest.port(), 8080)
+            )
+
+    def test_dest_diff_ports(self):
+        self.client.add_service('1.1.1.1', 80)
+        self.client.add_dest('1.1.1.1', 80, '2.2.2.1', 8080)
+        self.client.add_dest('1.1.1.1', 80, '2.2.2.1', 8081, weight=100)
+
+        dests = self.client.get_pools()[0].dests()
+        self.assertEqual(
+            dests[0].port(),
+            8081,
+            'Destination port should be set to 8081'
+        )
+        self.assertEqual(
+            dests[1].port(),
+            8080,
+            'Destination port should be set to 8080'
+        )
+
 
 class TestFwmService(BaseIpvsTestCase):
 
