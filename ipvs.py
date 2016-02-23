@@ -440,10 +440,11 @@ class IpvsClient(object):
     def del_fwm_service(self, fwmark, af=socket.AF_INET):
         self.__modify_fwm_service('del_service', fwmark, af=af)
 
-    def __modify_dest(self, method, vip, port, rip,
+    def __modify_dest(self, method, vip, port, rip, rport=None,
                       protocol=socket.IPPROTO_TCP, **dest_kwargs):
         vaf, vaddr = _to_af_union(vip)
         raf, raddr = _to_af_union(rip)
+        rport = rport or port
         out_msg = IpvsMessage(
             method, flags=netlink.MessageFlags.ACK_REQUEST,
             attr_list=IpvsCmdAttrList(
@@ -456,7 +457,7 @@ class IpvsClient(object):
                 dest=IpvsDestAttrList(
                     addr_family=raf,
                     addr=raddr,
-                    port=port,
+                    port=rport,
                     **dest_kwargs
                 ),
             ),
@@ -464,21 +465,24 @@ class IpvsClient(object):
         self.nlsock.execute(out_msg)
 
     @verbose
-    def add_dest(self, vip, port, rip,
+    def add_dest(self, vip, port, rip, rport=None,
                  protocol=socket.IPPROTO_TCP, weight=1, method=IPVS_TUNNELING):
-        self.__modify_dest('new_dest', vip, port, rip,
+        self.__modify_dest('new_dest', vip, port, rip, rport,
                            protocol=protocol, weight=weight,
                            fwd_method=method, l_thresh=0, u_thresh=0)
 
     @verbose
-    def update_dest(self, vip, port, rip, protocol=socket.IPPROTO_TCP,
-                    weight=None, method=IPVS_TUNNELING):
-        self.__modify_dest('set_dest', vip, port, rip, protocol, weight=weight,
-                           l_thresh=0, u_thresh=0, fwd_method=method)
+    def update_dest(self, vip, port, rip, rport=None,
+                    protocol=socket.IPPROTO_TCP, weight=None,
+                    method=IPVS_TUNNELING):
+        self.__modify_dest('set_dest', vip, port, rip, rport, protocol,
+                           weight=weight, l_thresh=0, u_thresh=0,
+                           fwd_method=method)
 
     @verbose
-    def del_dest(self, vip, port, rip, protocol=socket.IPPROTO_TCP):
-        self.__modify_dest('del_dest', vip, port, rip, protocol)
+    def del_dest(self, vip, port, rip, rport=None,
+                 protocol=socket.IPPROTO_TCP):
+        self.__modify_dest('del_dest', vip, port, rip, rport, protocol)
 
     def __modify_fwm_dest(self, method, fwmark, rip, vaf, port,
                           **dest_kwargs):
