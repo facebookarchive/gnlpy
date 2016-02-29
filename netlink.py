@@ -96,6 +96,7 @@ import array
 import errno
 import logging
 import os
+import six
 import socket
 import struct
 import subprocess
@@ -180,12 +181,13 @@ class NulStringType(object):
     '''
     @staticmethod
     def pack(val):
-        return val + '\0'
+        print(val)
+        return six.b(val) + b'\0'
 
     @staticmethod
     def unpack(val):
-        assert val[-1] == '\0'
-        return val[:-1]
+        assert six.indexbytes(val, -1) == 0
+        return val[:-1].decode('utf-8')
 
 
 class AttrListPacker(object):
@@ -214,7 +216,7 @@ def create_attr_list_type(class_name, *fields):
     class AttrListType(AttrListPacker):
         def __init__(self, **kwargs):
             self.attrs = {}
-            for k, v in kwargs.items():
+            for k, v in six.iteritems(kwargs):
                 if v is not None:
                     self.set(k, v)
 
@@ -235,13 +237,13 @@ def create_attr_list_type(class_name, *fields):
 
         def __repr__(self):
             attrs = ['%s=%s' % (key_to_name[k].lower(), repr(v))
-                     for k, v in self.attrs.items()]
+                     for k, v in six.iteritems(self.attrs)]
             return '%s(%s)' % (class_name, ', '.join(attrs))
 
         @staticmethod
         def pack(attr_list):
             packed = array.array(str('B'))
-            for k, v in attr_list.attrs.items():
+            for k, v in six.iteritems(attr_list.attrs):
                 if key_to_packer[k] == RecursiveSelf:
                     x = AttrListType.pack(v)
                 else:
@@ -373,7 +375,7 @@ def setup_message_classes(nlsock):
             msg_class.family = nlsock.resolve_family(msg_class.family)
             __cmd_unpack_map[msg_class.family] = msg_class
     __to_lookup_on_init.clear()
-    for family_id, msg_class in __cmd_unpack_map.iteritems():
+    for family_id, msg_class in six.iteritems(__cmd_unpack_map):
         for mod in getattr(msg_class, 'required_modules', []):
             subprocess.check_call(['modprobe', mod])
 
