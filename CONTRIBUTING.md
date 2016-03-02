@@ -12,9 +12,29 @@ We actively welcome your pull requests.
 1. Fork the repo and create your branch from `master`.
 2. If you've added code that should be tested, add tests
 3. If you've changed APIs, update the documentation.
-4. Ensure the test suite passes.
-5. Make sure your code lints.
+4. Ensure the test suite passes (`nosetests -v --with-coverage --cover-erase .`).
+5. Make sure your code lints. (`flake8 .`)
 6. If you haven't already, complete the Contributor License Agreement ("CLA").
+
+### Development environment
+
+In order to make it easier to test the code in an isolated environment, one can
+use [vagrant](https://www.vagrantup.com/).
+
+A `Vagranfile` is available at the root of the repository. The VM can be spinned
+up using:
+
+`vagrant up`
+
+On the first run, the VM will be provisioned with all the necessary dependencies
+to run the unittests suites.
+
+To run the test suites use:
+`vagrant ssh -c 'sudo bash -c "cd /mnt; nosetests -v --with-coverage --cover-erase ."'`
+
+To run the linter:
+`vagrant ssh -c 'sudo bash -c "cd /mnt; flake8 ."'`
+
 
 ## Contributor License Agreement ("CLA")
 In order to accept your pull request, we need you to submit a CLA. You only need
