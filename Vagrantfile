@@ -69,7 +69,7 @@ Vagrant.configure(2) do |config|
   config.vm.provision "shell", inline: <<-SHELL
      sudo apt-get update
      sudo apt-get install -y python-pip python-dev
-     sudo pip install flake8 coverage nose
+     sudo pip install coverage flake8 mock nose
      sudo bash -c 'grep -q ip_vs /etc/modules || echo ip_vs >> /etc/modules'
      sudo modprobe ip_vs
   SHELL

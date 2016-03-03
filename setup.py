@@ -10,11 +10,11 @@
 # unicode literals breaks distutils.core.setup
 # @lint-avoid-python-3-compatibility-imports
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='gnlpy',
-    version='0.1',
+    version='0.1.1',
     description='Generic NetLink PYthon library',
     author='Alex Gartrell',
     author_email='agartrell@fb.com',
@@ -22,4 +22,12 @@ setup(
     license='BSD+',
     packages=['gnlpy'],
     package_dir={'gnlpy': '.'},
+    classifiers=[
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+    ],
+    keywords='generic netlink library',
 )
