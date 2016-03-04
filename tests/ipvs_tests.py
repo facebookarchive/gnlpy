@@ -46,7 +46,7 @@ class BaseIpvsTestCase(unittest.TestCase):
                     service.port(),
                     protocol=service.proto_num())
             else:
-                self.client.del_fwm_service(service.fwmark())
+                self.client.del_fwm_service(service.fwmark(), af=service.af())
 
 
 class BaseJsonTestCase(unittest.TestCase):
@@ -93,7 +93,8 @@ class BaseJsonTestCase(unittest.TestCase):
     },
     {
         "service": {
-            "fwmark": 10
+            "fwmark": 10,
+            "af": 2
         },
         "dests": [
             {
@@ -120,6 +121,7 @@ class TestAddingServices(BaseIpvsTestCase):
         self.client.add_service('1.1.1.1', 80, protocol=socket.IPPROTO_UDP)
         pools = self.client.get_pools()
         self.assertEqual(pools[0].service().proto().lower(), 'udp')
+        self.assertEqual(pools[0].service().af(), socket.AF_INET)
 
     def test_add_service_tcp(self):
         '''
@@ -128,6 +130,7 @@ class TestAddingServices(BaseIpvsTestCase):
         self.client.add_service('1.1.1.1', 80, protocol=socket.IPPROTO_TCP)
         pools = self.client.get_pools()
         self.assertEqual(pools[0].service().proto().lower(), 'tcp')
+        self.assertEqual(pools[0].service().af(), socket.AF_INET)
 
     def test_add_service_tcp_default(self):
         '''
@@ -136,6 +139,16 @@ class TestAddingServices(BaseIpvsTestCase):
         self.client.add_service('1.1.1.1', 80)
         pools = self.client.get_pools()
         self.assertEqual(pools[0].service().proto().lower(), 'tcp')
+        self.assertEqual(pools[0].service().af(), socket.AF_INET)
+
+    def test_add_service_ipv6_default(self):
+        '''
+        Test that we service default to TCP.
+        '''
+        self.client.add_service('2001:0DB8::1', 80)
+        pools = self.client.get_pools()
+        self.assertEqual(pools[0].service().proto().lower(), 'tcp')
+        self.assertEqual(pools[0].service().af(), socket.AF_INET6)
 
 
 class TestAddingDest(BaseIpvsTestCase):
@@ -280,6 +293,33 @@ class TestFwmService(BaseIpvsTestCase):
                 'value of None, not {0}'.format(dest.port())
             )
 
+    def test_fwmark_af_inet(self):
+        self.client.add_fwm_service(10)
+        service = self.client.get_pools()[0].service()
+        self.assertEqual(service.af(), socket.AF_INET)
+
+    def test_fwmark_af_inet6(self):
+        self.client.add_fwm_service(10, af=socket.AF_INET6)
+        service = self.client.get_pools()[0].service()
+        self.assertEqual(service.af(), socket.AF_INET6)
+
+    def test_add_fwmark_twice(self):
+        self.client.add_fwm_service(10)
+        with self.assertRaises(OSError):
+            self.client.add_fwm_service(10)
+
+    def test_add_fwmark_different_af(self):
+        self.client.add_fwm_service(10)
+        self.client.add_fwm_service(10, af=socket.AF_INET6)
+
+    def test_del_fwmark_wrong_af(self):
+        self.client.add_fwm_service(10, af=socket.AF_INET6)
+        with self.assertRaises(OSError):
+            self.client.del_fwm_service(10)
+        self.client.add_fwm_service(11)
+        with self.assertRaises(OSError):
+            self.client.del_fwm_service(11, af=socket.AF_INET6)
+
 
 class TestIpvsClient(BaseIpvsTestCase):
     '''
@@ -387,13 +427,15 @@ class TestMiscClasses(BaseJsonTestCase):
         self.assertIn('port', s)
         self.assertIn('vip', s)
         self.assertIn('sched', s)
-        self.assertEqual(len(s.keys()), 4)
+        self.assertIn('af', s)
+        self.assertEqual(len(s.keys()), 5)
 
         s = self.pools[2].service().to_dict()
         # fwmark service
         self.assertIn('fwmark', s)
         self.assertIn('sched', s)
-        self.assertEqual(len(s.keys()), 2)
+        self.assertIn('af', s)
+        self.assertEqual(len(s.keys()), 3)
 
     def test_service_repr(self):
         s = self.pools[0].service()
