@@ -30,10 +30,10 @@ On the first run, the VM will be provisioned with all the necessary dependencies
 to run the unittests suites.
 
 To run the test suites use:
-`vagrant ssh -c 'sudo bash -c "cd /mnt; nosetests -v --with-coverage --cover-erase ."'`
+`vagrant ssh -c 'sudo bash -c "cd /mnt/gnlpy; nosetests -v --with-coverage --cover-erase ."'`
 
 To run the linter:
-`vagrant ssh -c 'sudo bash -c "cd /mnt; flake8 ."'`
+`vagrant ssh -c 'sudo bash -c "cd /mnt/gnlpy; flake8 ."'`
 
 
 ## Contributor License Agreement ("CLA")
