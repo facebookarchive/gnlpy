@@ -157,14 +157,18 @@ def verbose(f):
 
 def _validate_ip(ip):
     try:
-        socket.inet_pton(socket.AF_INET6 if ':' in ip else socket.AF_INET, ip)
+        socket.inet_pton(_to_af(ip), ip)
         return True
     except socket.error:
         return False
 
 
+def _to_af(ip):
+    return socket.AF_INET6 if ':' in ip else socket.AF_INET
+
+
 def _to_af_union(ip):
-    af = socket.AF_INET6 if ':' in ip else socket.AF_INET
+    af = _to_af(ip)
     return af, socket.inet_pton(af, ip).ljust(16, str('\0'))
 
 
@@ -261,15 +265,22 @@ class Service(object):
         self.port_ = d.get('port', None)
         self.sched_ = d.get('sched', None)
         self.fwmark_ = d.get('fwmark', None)
+        default_af = None
+        if self.vip_:
+            default_af = _to_af(self.vip_)
+        self.af_ = d.get('af', default_af)
         if validate:
             self.validate()
 
     def __repr__(self):
         if self.fwmark_ is not None:
-            return 'Service(d=dict(fwmark=%d, sched="%s"))' % (
-                self.fwmark(), self.sched())
+            return 'Service(d=dict(fwmark=%d, sched="%s", af="%s"))' % (
+                self.fwmark(), self.sched(), self.af())
         return 'Service(d=dict(proto="%s", vip="%s", port=%d, sched="%s"))' % (
             self.proto(), self.vip(), self.port(), self.sched())
+
+    def af(self):
+        return self.af_
 
     def fwmark(self):
         return self.fwmark_
@@ -290,6 +301,7 @@ class Service(object):
         return self.sched_
 
     def validate(self):
+        assert self.af_ in [socket.AF_INET, socket.AF_INET6]
         if self.vip_ or self.port_ or self.proto_:
             assert self.proto_.lower() in ['tcp', 'udp']
             assert _validate_ip(self.vip_)
@@ -311,11 +323,13 @@ class Service(object):
                 'vip': self.vip_,
                 'port': self.port_,
                 'sched': self.sched_,
+                'af': self.af_
             }
         else:
             return {
                 'fwmark': self.fwmark_,
                 'sched': self.sched_,
+                'af': self.af_
             }
 
     def __eq__(self, other):
@@ -332,9 +346,14 @@ class Service(object):
                 proto=_from_proto_num(lst.get('protocol')),
                 port=lst.get('port'),
                 sched=lst.get('sched_name'),
+                af=lst.get('af'),
             )
         else:
-            d = dict(fwmark=lst.get('fwmark'), sched=lst.get('sched_name'))
+            d = dict(
+                fwmark=lst.get('fwmark'),
+                sched=lst.get('sched_name'),
+                af=lst.get('af'),
+            )
         return Service(d=d, validate=True)
 
 
