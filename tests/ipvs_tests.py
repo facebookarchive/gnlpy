@@ -342,6 +342,62 @@ class TestIpvsClient(BaseIpvsTestCase):
         self.client.add_service('1.1.1.1', 80)
 
 
+class TestIpvsClientQuery(BaseIpvsTestCase):
+
+    def setUp(self):
+        super(TestIpvsClientQuery, self).setUp()
+        self.client.add_service('1.1.1.1', 80)
+        self.client.add_dest('1.1.1.1', 80, '2.2.2.1', 80, weight=10)
+        self.client.add_dest('1.1.1.1', 80, '2.2.2.2', 80, weight=10)
+        self.client.add_service('1.1.1.2', 8080)
+        self.client.add_dest('1.1.1.2', 8080, '2.2.2.1', 8080, weight=10)
+        self.client.add_dest('1.1.1.2', 8080, '2.2.2.2', 8080, weight=10)
+
+    def test_get_pools(self):
+        for p in self.client.get_pools():
+            s = p.service()
+            self.assertIn(s.vip(), ['1.1.1.1', '1.1.1.2'])
+            for d in p.dests():
+                self.assertIn(d.ip(), ['2.2.2.1', '2.2.2.2'])
+        # No services defined return an empty list
+        self.client.flush()
+        self.assertEquals(self.client.get_pools(), [])
+
+    def test_get_service(self):
+        s = ipvs.Service({'vip': '1.1.1.2', 'port': 8080,
+                          'proto': 'tcp', 'sched': 'rr'})
+        self.assertEquals(
+            self.client.get_service(s.to_attr_list()),
+            s)
+        # An inexistent service returns None
+        s = ipvs.Service({'vip': '1.1.1.4', 'port': 8080,
+                          'proto': 'tcp', 'sched': 'rr'})
+        self.assertEquals(self.client.get_service(s.to_attr_list()),
+                          None)
+
+    def test_get_pool(self):
+        s = ipvs.Service({'vip': '1.1.1.2', 'port': 8080,
+                          'proto': 'tcp', 'sched': 'rr'})
+        p = self.client.get_pool(s.to_attr_list())
+        self.assertEquals(p.service(), s)
+        self.assertEquals(len(p.dests()), 2)
+        # An inexistent service returns None
+        s.port_ = 9090
+        self.assertEquals(self.client.get_pool(s.to_attr_list()), None)
+
+    def test_get_dests(self):
+        s = ipvs.Service({'vip': '1.1.1.2', 'port': 8080,
+                          'proto': 'tcp', 'sched': 'rr'})
+        srv = s.to_attr_list()
+        res = self.client.get_dests(srv)
+        self.assertEquals(len(res), 2)
+        self.assertEquals(res[0].weight(), 10)
+        self.assertEquals(res[0].fwd_method(), ipvs.IPVS_TUNNELING)
+        # An inexistent dest returns an empty list
+        s.vip_ = '2.2.2.4'
+        self.assertEquals(self.client.get_dests(srv), [])
+
+
 class TestMiscClasses(BaseJsonTestCase):
 
     def test_load_pools_from_json(self):

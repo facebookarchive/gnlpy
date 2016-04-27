@@ -235,6 +235,13 @@ class Dest(object):
             'weight': self.weight_,
         }
 
+    def to_attr_list(self):
+        af, addr = _to_af_union(self.ip_)
+        return IpvsDestAttrList(addr_family=af,
+                                addr=addr,
+                                port=self.port_,
+                                fwd_method=self.fwd_method_)
+
     def __eq__(self, other):
         return isinstance(other, Dest) and self.to_dict() == other.to_dict()
 
@@ -331,6 +338,21 @@ class Service(object):
                 'sched': self.sched_,
                 'af': self.af_
             }
+
+    def to_attr_list(self):
+        if self.fwmark_ is None:
+            af, addr = _to_af_union(self.vip_)
+            netmask = ((1 << 32) - 1) if af == socket.AF_INET else 128
+            proto = self.proto_num()
+            return IpvsServiceAttrList(af=af, addr=addr, protocol=proto,
+                                       netmask=netmask, port=self.port_,
+                                       sched_name=self.sched_,
+                                       flags=struct.pack(str('=II'), 0, 0))
+        else:
+            netmask = ((1 << 32) - 1)
+            return IpvsServiceAttrList(fwmark=self.fwmark_, af=self.af_,
+                                       netmask=netmask, sched_name=self.sched_,
+                                       flags=struct.pack(str('=II'), 0, 0))
 
     def __eq__(self, other):
         return isinstance(other, Service) and self.to_dict() == other.to_dict()
@@ -545,6 +567,9 @@ class IpvsClient(object):
         self.nlsock.execute(out_msg)
 
     def get_pools(self):
+        """
+        Get all the pools configured
+        """
         pools = []
 
         req = IpvsMessage(
@@ -552,18 +577,46 @@ class IpvsClient(object):
         for msg in self.nlsock.query(req):
             svc_lst = msg.get_attr_list().get('service')
             service = Service.from_attr_list(svc_lst)
-            dests = []
-            out_msg = IpvsMessage(
-                'get_dest', flags=netlink.MessageFlags.MATCH_ROOT_REQUEST,
-                attr_list=IpvsCmdAttrList(service=svc_lst)
-            )
-            for dst_msg in self.nlsock.query(out_msg):
-                dst_lst = dst_msg.get_attr_list().get('dest')
-                dests.append(Dest.from_attr_list(dst_lst, svc_lst.get('af')))
-
+            dests = self.get_dests(svc_lst)
             pools.append(Pool.from_args(
                 service=service,
                 dests=dests
             ))
 
         return pools
+
+    def get_pool(self, svc_lst):
+        s = self.get_service(svc_lst)
+        if s is None:
+            return None
+        dests = self.get_dests(s.to_attr_list())
+        return Pool.from_args(service=s, dests=dests)
+
+    def get_service(self, svc_lst):
+        out_msg = IpvsMessage(
+            'get_service', flags=netlink.MessageFlags.REQUEST,
+            attr_list=IpvsCmdAttrList(service=svc_lst))
+        try:
+            res = self.nlsock.query(out_msg)
+            svc_lst = res[0].get_attr_list().get('service')
+            return Service.from_attr_list(svc_lst)
+        except RuntimeError:
+            # If the query failed because the service is not present
+            # simply return None
+            return None
+
+    def get_dests(self, svc_lst):
+        assert isinstance(svc_lst, IpvsServiceAttrList)
+        dests = []
+        out_msg = IpvsMessage(
+            'get_dest', flags=netlink.MessageFlags.MATCH_ROOT_REQUEST,
+            attr_list=IpvsCmdAttrList(service=svc_lst)
+        )
+        try:
+            for dst_msg in self.nlsock.query(out_msg):
+                dst_lst = dst_msg.get_attr_list().get('dest')
+                dests.append(Dest.from_attr_list(dst_lst, svc_lst.get('af')))
+            return dests
+        except RuntimeError:
+            # Typically happens if the service is not defined
+            return None
