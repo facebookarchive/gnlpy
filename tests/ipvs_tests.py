@@ -388,13 +388,16 @@ class TestIpvsClientQuery(BaseIpvsTestCase):
     def test_get_dests(self):
         s = ipvs.Service({'vip': '1.1.1.2', 'port': 8080,
                           'proto': 'tcp', 'sched': 'rr'})
+        # Generate the IpvsServiceAttrList
         srv = s.to_attr_list()
         res = self.client.get_dests(srv)
         self.assertEquals(len(res), 2)
         self.assertEquals(res[0].weight(), 10)
         self.assertEquals(res[0].fwd_method(), ipvs.IPVS_TUNNELING)
-        # An inexistent dest returns an empty list
+        # An inexistent dest returns an empty list.
         s.vip_ = '2.2.2.4'
+        # Generate new IpvsServiceAttrList
+        srv = s.to_attr_list()
         self.assertEquals(self.client.get_dests(srv), [])
 
 
