@@ -7,24 +7,24 @@
 
 python_binary(
     name='ipvs-dump',
+    py_version='<3',
     srcs=[
         'ipvs_dump.py',
     ],
     deps=[
         '@/gnlpy:ipvs',
     ],
-    py_version = '>=2.7',
     main_module='gnlpy.examples.ipvs_dump',
 )
 
 python_binary(
     name='taskstats-dump',
+    py_version='<3',
     srcs=[
         'taskstats_dump.py',
     ],
     deps=[
         '@/gnlpy:taskstats',
     ],
-    py_version = '>=2.7',
     main_module='gnlpy.examples.taskstats_dump',
 )
