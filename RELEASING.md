@@ -22,7 +22,8 @@ Before building a new package:
 * update the `CHANGELOG.md`
 * tag the release in github
 
-We build a wheel package as this is pure python module:
+We build a wheel package as this is pure python module. It is made universal
+via settings in `setup.cfg`:
 ```
 python setup.py bdist_wheel
 ```
@@ -36,7 +37,7 @@ To upload to [PyPI](https://pypi.python.org/pypi) we use twine. First make
 sure you have an [account](http://python-packaging-user-guide.readthedocs.org/en/latest/distributing/#create-an-account).
 
 ```
-twine upload dist/gnlpy-version-py2-none-any.whl
+twine upload dist/gnlpy-version-py2.py3-none-any.whl
 ```
 or
 ```

@@ -7,7 +7,10 @@ from __future__ import unicode_literals
 
 from gnlpy import netlink
 
-import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 import socket
 import unittest
 
@@ -50,13 +53,13 @@ class AttrListTestCase(unittest.TestCase):
     def test_packing(self):
         a = self.AttrListTest(
             u64type=2,
-            binarytype='ABCD',
+            binarytype=b'ABCD',
             nulstringtype='abcd',
         )
 
         b = pack_unpack(self.AttrListTest, a)
         self.assertEqual(b.get('u64type'), 2)
-        self.assertEqual(b.get('binarytype'), 'ABCD')
+        self.assertEqual(b.get('binarytype'), b'ABCD')
         self.assertEqual(b.get('nulstringtype'), 'abcd')
 
     def test_recursive_self(self):
@@ -148,7 +151,7 @@ class MessageTypeTestCase(unittest.TestCase):
     def test_packing(self):
         attr = self.AttrListTest(
             u64type=2,
-            binarytype='ABCD',
+            binarytype=b'ABCD',
             nulstringtype='abcd',
         )
 
