@@ -33,6 +33,17 @@ IPVS_METHODS = set([
     IPVS_ROUTING
 ])
 
+# IPVS Flags
+IPVS_SVC_F_PERSISTENT = 0x0001
+IPVS_SVC_F_HASHED = 0x0002
+IPVS_SVC_F_ONEPACKET = 0x0004
+IPVS_SVC_F_SCHED1 = 0x0008
+IPVS_SVC_F_SCHED2 = 0x0010
+IPVS_SVC_F_SCHED2 = 0x0020
+
+IPVS_SVC_F_SCHED_SH_FALLBACK = IPVS_SVC_F_SCHED1
+IPVS_SVC_F_SCHED_SH_PORT = IPVS_SVC_F_SCHED2
+
 # These are attr_list_types which are nestable.  The command attribute list
 # is ultimately referenced by the messages which are passed down to the
 # kernel via netlink.  These structures must match the type and ordering
@@ -273,6 +284,7 @@ class Service(object):
         self.port_ = d.get('port', None)
         self.sched_ = d.get('sched', None)
         self.fwmark_ = d.get('fwmark', None)
+        self.flags_ = d.get('flags', 0)
         default_af = None
         if self.vip_:
             default_af = _to_af(self.vip_)
@@ -282,16 +294,26 @@ class Service(object):
 
     def __repr__(self):
         if self.fwmark_ is not None:
-            return 'Service(d=dict(fwmark=%d, sched="%s", af="%s"))' % (
-                self.fwmark(), self.sched(), self.af())
-        return 'Service(d=dict(proto="%s", vip="%s", port=%d, sched="%s"))' % (
-            self.proto(), self.vip(), self.port(), self.sched())
+            return (
+                'Service(d=dict(fwmark=%d, sched="%s", af="%s", flags="%d"))' %
+                (self.fwmark(), self.sched(), self.af(), self.flags())
+            )
+        return (
+            'Service(d=dict(proto="%s", vip="%s", port=%d, sched="%s", '
+            'flags="%d"))' % (
+                self.proto(), self.vip(), self.port(), self.sched(),
+                self.flags()
+            )
+        )
 
     def af(self):
         return self.af_
 
     def fwmark(self):
         return self.fwmark_
+
+    def flags(self):
+        return self.flags_
 
     def proto(self):
         return self.proto_
@@ -331,13 +353,15 @@ class Service(object):
                 'vip': self.vip_,
                 'port': self.port_,
                 'sched': self.sched_,
-                'af': self.af_
+                'af': self.af_,
+                'flags': self.flags_,
             }
         else:
             return {
                 'fwmark': self.fwmark_,
                 'sched': self.sched_,
-                'af': self.af_
+                'af': self.af_,
+                'flags': self.flags_,
             }
 
     def to_attr_list(self):
@@ -348,12 +372,16 @@ class Service(object):
             return IpvsServiceAttrList(af=af, addr=addr, protocol=proto,
                                        netmask=netmask, port=self.port_,
                                        sched_name=self.sched_,
-                                       flags=struct.pack(str('=II'), 0, 0))
+                                       flags=struct.pack(
+                                            str('=II'), self.flags_, 0xFFFFFFFF
+                                       ))
         else:
             netmask = ((1 << 32) - 1)
             return IpvsServiceAttrList(fwmark=self.fwmark_, af=self.af_,
                                        netmask=netmask, sched_name=self.sched_,
-                                       flags=struct.pack(str('=II'), 0, 0))
+                                       flags=struct.pack(
+                                            str('=II'), self.flags_, 0xFFFFFFFF
+                                       ))
 
     def __eq__(self, other):
         return isinstance(other, Service) and self.to_dict() == other.to_dict()
@@ -370,12 +398,14 @@ class Service(object):
                 port=lst.get('port'),
                 sched=lst.get('sched_name'),
                 af=lst.get('af'),
+                flags=struct.unpack('=II', lst.get('flags'))[0],
             )
         else:
             d = dict(
                 fwmark=lst.get('fwmark'),
                 sched=lst.get('sched_name'),
                 af=lst.get('af'),
+                flags=struct.unpack('=II', lst.get('flags'))[0],
             )
         return Service(d=d, validate=True)
 
@@ -428,7 +458,8 @@ class IpvsClient(object):
         self.verbose = verbose
         self.nlsock = netlink.NetlinkSocket(verbose=verbose)
 
-    def __modify_service(self, method, vip, port, protocol, **svc_kwargs):
+    def __modify_service(self, method, vip, port, protocol,
+                         flags=0, **svc_kwargs):
         af, addr = _to_af_union(vip)
         netmask = ((1 << 32) - 1) if af == socket.AF_INET else 128
         out_msg = IpvsMessage(
@@ -440,7 +471,7 @@ class IpvsClient(object):
                     protocol=protocol,
                     addr=addr,
                     netmask=netmask,
-                    flags=struct.pack(str('=II'), 0, 0),
+                    flags=struct.pack(str('=II'), flags, 0xFFFFFFFF),
                     **svc_kwargs
                 )
             )
@@ -449,22 +480,22 @@ class IpvsClient(object):
 
     @verbose
     def add_service(self, vip, port, protocol=socket.IPPROTO_TCP,
-                    sched_name='rr'):
+                    sched_name='rr', flags=0):
         self.__modify_service('new_service', vip, port, protocol,
-                              sched_name=sched_name, timeout=0)
+                              sched_name=sched_name, timeout=0, flags=flags)
 
     @verbose
     def del_service(self, vip, port, protocol=socket.IPPROTO_TCP):
         self.__modify_service('del_service', vip, port, protocol)
 
-    def __modify_fwm_service(self, method, fwmark, af, **svc_kwargs):
+    def __modify_fwm_service(self, method, fwmark, af, flags=0, **svc_kwargs):
         netmask = ((1 << 32) - 1) if af == socket.AF_INET else 128
         out_msg = IpvsMessage(
             method, flags=netlink.MessageFlags.ACK_REQUEST,
             attr_list=IpvsCmdAttrList(
                 service=IpvsServiceAttrList(
                     fwmark=fwmark,
-                    flags=struct.pack(str('=II'), 0, 0),
+                    flags=struct.pack(str('=II'), flags, 0xFFFFFFFF),
                     af=af,
                     netmask=netmask,
                     **svc_kwargs
