@@ -557,5 +557,6 @@ class TestHelperFunc(unittest.TestCase):
         with self.assertRaises(AssertionError):
             ipvs._from_proto_num(socket.IPPROTO_RSVP)
 
+
 if __name__ == '__main__':
     unittest.main()

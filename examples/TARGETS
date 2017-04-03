@@ -28,3 +28,15 @@ python_binary(
     ],
     main_module='gnlpy.examples.taskstats_dump',
 )
+
+python_binary(
+    name='cgroupstats-dump',
+    py_version='<3',
+    srcs=[
+        'cgroupstats_dump.py',
+    ],
+    deps=[
+        '@/gnlpy:cgropupstats',
+    ],
+    main_module='gnlpy.examples.cgroupstats_dump',
+)

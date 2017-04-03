@@ -12,17 +12,17 @@ from __future__ import unicode_literals
 
 import argparse
 import sys
-from gnlpy.taskstats import TaskstatsClient
+from gnlpy.cgroupstats import CgroupstatsClient
 
 
 def main(argv):
     parser = argparse.ArgumentParser(
-        description='Show task information. Run as root.')
-    parser.add_argument('pid', type=int, help='The process id to show')
+        description='Show cgroup stats information. Run as root.')
+    parser.add_argument('path', type=str, help='Path to cgroup cpu hierarchy')
 
     args = parser.parse_args(argv[1:])
-    c = TaskstatsClient()
-    stats = c.get_pid_stats(args.pid)
+    c = CgroupstatsClient()
+    stats = c.get_cgroup_stats(args.path)
     print(stats)
 
 
