@@ -57,6 +57,7 @@ class Taskstats(object):
         attrs['comm'] = attrs['comm'].rstrip('\0')
         return Taskstats(**attrs)
 
+
 TaskstatsType = netlink.create_attr_list_type(
     'TaskstatsType',
     ('PID', netlink.U32Type),

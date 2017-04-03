@@ -145,6 +145,7 @@ def create_struct_fmt_type(fmt):
 
     return StructFmtType
 
+
 U8Type = create_struct_fmt_type('=B')
 U16Type = create_struct_fmt_type('=H')
 U32Type = create_struct_fmt_type('=I')
@@ -347,6 +348,7 @@ def create_genl_message_type(class_name, family_id_or_name, *fields,
 
     return MessageType
 
+
 # This is a global map of unpackers.  The @message_class decorator inserts
 # new message classes into this map so it can be used for the purpose of
 # deserializing netlink messages from NetlinkSocket::recv
@@ -397,6 +399,7 @@ def serialize_message(msg, port_id, seq):
     p = array.array(str('B'), t)
     p.extend(s)
     return p
+
 
 # In order to discover family IDs, we'll need to exchange some Ctrl
 # messages with the kernel.  We declare these message types and attribute
@@ -466,7 +469,7 @@ class ErrorMessage(object):
         error = struct.unpack(str('=i'), data[:4])[0]
         try:
             msg = deserialize_message(data[4:])
-        except:
+        except Exception:
             msg = None
         return ErrorMessage(error=error, msg=msg)
 
