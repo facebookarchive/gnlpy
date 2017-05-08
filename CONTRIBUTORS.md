@@ -1,4 +1,5 @@
 Alex Gartrell
+Alexandre Dias (Outlyer)
 Anatolii Lapytskyi
 Emmanuel Bretelle
 Giuseppe Lavagetto

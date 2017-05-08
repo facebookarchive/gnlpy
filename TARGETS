@@ -31,3 +31,13 @@ python_library(
         ':netlink',
     ],
 )
+
+python_library(
+    name='cgroupstats',
+    srcs=[
+        'cgroupstats.py',
+    ],
+    deps=[
+        ':netlink',
+    ],
+)
