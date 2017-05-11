@@ -9,4 +9,4 @@ clean:
 	rm -rf dist build gnlpy.egg-info
 
 upload:
-	twine upload dists/*whl
+	twine upload dist/*whl

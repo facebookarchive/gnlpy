@@ -1,3 +1,11 @@
+## 0.1.2 (2017-05-11)
+
+* Add support for cgroup_stats (@alexdias)
+* py3 compatible (@chantra)
+* Add IpvsClient.get_service (@lavagetto)
+* Add IpvsClient.get_pool (@lavagetto)
+* Expose address family to Service (@vmauge)
+
 ## 0.1.1 (2016-03-02)
 
 ### ipvs
