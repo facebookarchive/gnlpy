@@ -366,19 +366,22 @@ class TestIpvsClientQuery(BaseIpvsTestCase):
 
     def test_get_service(self):
         s = ipvs.Service({'vip': '1.1.1.2', 'port': 8080,
-                          'proto': 'tcp', 'sched': 'rr'})
+                          'proto': 'tcp', 'sched': 'rr',
+                          'flags': ipvs.IPVS_SVC_F_HASHED})
         self.assertEquals(
             self.client.get_service(s.to_attr_list()),
             s)
         # An inexistent service returns None
         s = ipvs.Service({'vip': '1.1.1.4', 'port': 8080,
-                          'proto': 'tcp', 'sched': 'rr'})
+                          'proto': 'tcp', 'sched': 'rr',
+                          'flags': ipvs.IPVS_SVC_F_HASHED})
         self.assertEquals(self.client.get_service(s.to_attr_list()),
                           None)
 
     def test_get_pool(self):
         s = ipvs.Service({'vip': '1.1.1.2', 'port': 8080,
-                          'proto': 'tcp', 'sched': 'rr'})
+                          'proto': 'tcp', 'sched': 'rr',
+                          'flags': ipvs.IPVS_SVC_F_HASHED})
         p = self.client.get_pool(s.to_attr_list())
         self.assertEquals(p.service(), s)
         self.assertEquals(len(p.dests()), 2)
@@ -388,7 +391,8 @@ class TestIpvsClientQuery(BaseIpvsTestCase):
 
     def test_get_dests(self):
         s = ipvs.Service({'vip': '1.1.1.2', 'port': 8080,
-                          'proto': 'tcp', 'sched': 'rr'})
+                          'proto': 'tcp', 'sched': 'rr',
+                          'flags': ipvs.IPVS_SVC_F_HASHED})
         # Generate the IpvsServiceAttrList
         srv = s.to_attr_list()
         res = self.client.get_dests(srv)
@@ -400,6 +404,36 @@ class TestIpvsClientQuery(BaseIpvsTestCase):
         # Generate new IpvsServiceAttrList
         srv = s.to_attr_list()
         self.assertEquals(self.client.get_dests(srv), [])
+
+
+class TestIpvsClientFlags(BaseIpvsTestCase):
+
+    def setUp(self):
+        super(TestIpvsClientFlags, self).setUp()
+        self.client.add_service(
+            '1.1.1.1', 80, sched_name='rr', flags=ipvs.IPVS_SVC_F_ONEPACKET
+        )
+        self.client.add_dest('1.1.1.1', 80, '2.2.2.1', 80, weight=10)
+        self.client.add_dest('1.1.1.1', 80, '2.2.2.2', 80, weight=10)
+        self.client.add_service('1.1.1.2', 8080)
+        self.client.add_dest('1.1.1.2', 8080, '2.2.2.1', 8080, weight=10)
+        self.client.add_dest('1.1.1.2', 8080, '2.2.2.2', 8080, weight=10)
+
+    def test_get_flags(self):
+        """
+        Test to confirm that the we can set the flags properly.
+        A service is always hashed when it is added so even though we only
+        configure ONEPACKET, we need to check that what is actually set is
+        ONEPACKET | HASHED:
+        http://lxr.free-electrons.com/source/net/netfilter/ipvs/ip_vs_ctl.c?v=2.6.34#L367
+        """
+        s = ipvs.Service({'vip': '1.1.1.1', 'port': 80,
+                          'proto': 'tcp', 'sched': 'rr',
+                          'flags': (ipvs.IPVS_SVC_F_ONEPACKET |
+                                    ipvs.IPVS_SVC_F_HASHED)})
+        # Generate the IpvsServiceAttrList
+        p = self.client.get_pool(s.to_attr_list())
+        self.assertEquals(p.service(), s)
 
 
 class TestMiscClasses(BaseJsonTestCase):
@@ -488,14 +522,14 @@ class TestMiscClasses(BaseJsonTestCase):
         self.assertIn('vip', s)
         self.assertIn('sched', s)
         self.assertIn('af', s)
-        self.assertEqual(len(s.keys()), 5)
+        self.assertEqual(len(s.keys()), 6)
 
         s = self.pools[2].service().to_dict()
         # fwmark service
         self.assertIn('fwmark', s)
         self.assertIn('sched', s)
         self.assertIn('af', s)
-        self.assertEqual(len(s.keys()), 3)
+        self.assertEqual(len(s.keys()), 4)
 
     def test_service_repr(self):
         s = self.pools[0].service()
