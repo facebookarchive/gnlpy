@@ -33,6 +33,9 @@ IPVS_METHODS = set([
     IPVS_ROUTING
 ])
 
+# Virtual Service flags
+IPVS_SVC_F_ONEPACKET = 0x0004
+
 # These are attr_list_types which are nestable.  The command attribute list
 # is ultimately referenced by the messages which are passed down to the
 # kernel via netlink.  These structures must match the type and ordering
@@ -428,9 +431,17 @@ class IpvsClient(object):
         self.verbose = verbose
         self.nlsock = netlink.NetlinkSocket(verbose=verbose)
 
-    def __modify_service(self, method, vip, port, protocol, **svc_kwargs):
+    def __modify_service(self, method, vip, port, protocol, ops, **svc_kwargs):
+        if ops:
+            assert protocol == socket.IPPROTO_UDP
+
         af, addr = _to_af_union(vip)
         netmask = ((1 << 32) - 1) if af == socket.AF_INET else 128
+
+        flags = 0
+        if ops:
+            flags |= IPVS_SVC_F_ONEPACKET
+
         out_msg = IpvsMessage(
             method, flags=netlink.MessageFlags.ACK_REQUEST,
             attr_list=IpvsCmdAttrList(
@@ -440,7 +451,7 @@ class IpvsClient(object):
                     protocol=protocol,
                     addr=addr,
                     netmask=netmask,
-                    flags=struct.pack(str('=II'), 0, 0),
+                    flags=struct.pack(str('=II'), flags, flags),
                     **svc_kwargs
                 )
             )
@@ -449,13 +460,13 @@ class IpvsClient(object):
 
     @verbose
     def add_service(self, vip, port, protocol=socket.IPPROTO_TCP,
-                    sched_name='rr'):
-        self.__modify_service('new_service', vip, port, protocol,
+                    sched_name='rr', ops=False):
+        self.__modify_service('new_service', vip, port, protocol, ops,
                               sched_name=sched_name, timeout=0)
 
     @verbose
     def del_service(self, vip, port, protocol=socket.IPPROTO_TCP):
-        self.__modify_service('del_service', vip, port, protocol)
+        self.__modify_service('del_service', vip, port, protocol, False)
 
     def __modify_fwm_service(self, method, fwmark, af, **svc_kwargs):
         netmask = ((1 << 32) - 1) if af == socket.AF_INET else 128
