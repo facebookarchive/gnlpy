@@ -124,6 +124,24 @@ class TestAddingServices(BaseIpvsTestCase):
         self.assertEqual(pools[0].service().proto().lower(), 'udp')
         self.assertEqual(pools[0].service().af(), socket.AF_INET)
 
+    def test_add_service_udp_ops(self):
+        '''
+        Test that we can create UDP service with One-packet scheduling.
+        '''
+        self.client.add_service('1.1.1.1', 80, protocol=socket.IPPROTO_UDP,
+                                ops=True)
+        pools = self.client.get_pools()
+        self.assertEqual(pools[0].service().proto().lower(), 'udp')
+        self.assertEqual(pools[0].service().af(), socket.AF_INET)
+
+    def test_add_service_tcp_ops(self):
+        '''
+        Test that we *cannot* create TCP service with One-packet scheduling.
+        '''
+        with self.assertRaises(AssertionError):
+            self.client.add_service('1.1.1.1', 80,
+                                    protocol=socket.IPPROTO_TCP, ops=True)
+
     def test_add_service_tcp(self):
         '''
         Test that we can create TCP service.
