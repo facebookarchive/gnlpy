@@ -211,9 +211,13 @@ class Dest(object):
         self.weight_ = d.get('weight', None)
         self.port_ = d.get('port', None)
         self.fwd_method_ = d.get('fwd_method', IPVS_TUNNELING)
+        self.counters_ = d.get('counters', {})
 
     def __repr__(self):
         return 'Dest(d=dict(ip="%s", weight=%d))' % (self.ip(), self.weight())
+
+    def counters(self):
+        return self.counters_
 
     def ip(self):
         return self.ip_
@@ -260,7 +264,23 @@ class Dest(object):
                                      lst.get('addr')),
                 'weight': lst.get('weight'),
                 'port': lst.get('port'),
-                'fwd_method': lst.get('fwd_method')
+                'fwd_method': lst.get('fwd_method'),
+                # 'stats': lst.get('stats'),
+                'counters': {
+                    'active_conns':   lst.get('active_conns'),
+                    'inact_conns':    lst.get('inact_conns'),
+                    'persist_conns':  lst.get('persist_conns'),
+                    'conns':          lst.get('stats').get('conns'),
+                    'inpkts':         lst.get('stats').get('inpkts'),
+                    'outpkts':        lst.get('stats').get('outpkts'),
+                    'inbytes':        lst.get('stats').get('inbytes'),
+                    'outbytes':       lst.get('stats').get('outbytes'),
+                    'cps':            lst.get('stats').get('cps'),
+                    'inpps':          lst.get('stats').get('inpps'),
+                    'outpps':         lst.get('stats').get('outpps'),
+                    'inbps':          lst.get('stats').get('inbps'),
+                    'outbps':         lst.get('stats').get('outbps')
+                }
             },
             validate=True,
         )
@@ -280,6 +300,7 @@ class Service(object):
         if self.vip_:
             default_af = _to_af(self.vip_)
         self.af_ = d.get('af', default_af)
+        self.counters_ = d.get('counters', {})
         if validate:
             self.validate()
 
@@ -289,6 +310,9 @@ class Service(object):
                 self.fwmark(), self.sched(), self.af())
         return 'Service(d=dict(proto="%s", vip="%s", port=%d, sched="%s"))' % (
             self.proto(), self.vip(), self.port(), self.sched())
+
+    def counters(self):
+        return self.counters_
 
     def af(self):
         return self.af_
@@ -373,6 +397,18 @@ class Service(object):
                 port=lst.get('port'),
                 sched=lst.get('sched_name'),
                 af=lst.get('af'),
+                counters={
+                    'conns':     lst.get('stats').get('conns'),
+                    'inpkts':    lst.get('stats').get('inpkts'),
+                    'outpkts':   lst.get('stats').get('outpkts'),
+                    'inbytes':   lst.get('stats').get('inbytes'),
+                    'outbytes':  lst.get('stats').get('outbytes'),
+                    'cps':       lst.get('stats').get('cps'),
+                    'inpps':     lst.get('stats').get('inpps'),
+                    'outpps':    lst.get('stats').get('outpps'),
+                    'inbps':     lst.get('stats').get('inbps'),
+                    'outbps':    lst.get('stats').get('outbps')
+                }
             )
         else:
             d = dict(
