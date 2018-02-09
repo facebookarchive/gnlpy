@@ -265,7 +265,6 @@ class Dest(object):
                 'weight': lst.get('weight'),
                 'port': lst.get('port'),
                 'fwd_method': lst.get('fwd_method'),
-                # 'stats': lst.get('stats'),
                 'counters': {
                     'active_conns':   lst.get('active_conns'),
                     'inact_conns':    lst.get('inact_conns'),
