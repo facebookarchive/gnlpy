@@ -22,6 +22,7 @@ setup(
     license='BSD+',
     packages=['gnlpy'],
     package_dir={'gnlpy': '.'},
+    install_requires=['six'],
     classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
