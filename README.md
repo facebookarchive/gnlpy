@@ -1,9 +1,9 @@
 # gnlpy: Generic NetLink in PYthon
 
 netlink sockets are used to communicate with various kernel subsystems as
-an RPC system.  `man 7 netlink` for more information.  You can also see a
-detailed description of how this library works in the documentation for the
-netlink.py python file.
+an RPC system.  [`man 7 netlink`](http://man7.org/linux/man-pages/man7/netlink.7.html)
+for more information.  You can also see a detailed description of how this
+library works in the documentation for the netlink.py python file.
 
 This project provides a python-only implementation of generic netlink
 sockets.  It was written for ipvs initially, but can be easily adapted to
