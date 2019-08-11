@@ -54,7 +54,7 @@ class Taskstats(object):
         fmt = 'HIBBQQQQQQQQ32sQxxxIIIIIQQQQQQQQQQQQQQQQQQQQQQQ'
         attrs = dict(zip(Taskstats.__fields__, struct.unpack(fmt, val)))
         assert attrs['version'] == 8, "Bad version: %d" % attrs["version"]
-        attrs['comm'] = attrs['comm'].rstrip('\0')
+        attrs['comm'] = attrs['comm'].decode('utf-8').rstrip('\0')
         return Taskstats(**attrs)
 
 
