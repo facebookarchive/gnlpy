@@ -518,11 +518,11 @@ class TestMiscClasses(BaseJsonTestCase):
     def test_service_repr(self):
         s = self.pools[0].service()
         # non fwmark service
-        self.assertRegexpMatches(str(s), '^Service\(.*vip.*')
+        self.assertRegexpMatches(str(s), r'^Service\(.*vip.*')
 
         s = self.pools[2].service()
         # fwmark service
-        self.assertRegexpMatches(str(s), '^Service\(.*fwmark.*')
+        self.assertRegexpMatches(str(s), r'^Service\(.*fwmark.*')
 
 
 class TestHelperFunc(unittest.TestCase):
