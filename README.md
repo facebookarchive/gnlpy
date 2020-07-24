@@ -84,7 +84,7 @@ for the full implementation.
         print(stats)
 
 ### Contributing
-Contribututions to gnlpy are more than welcome. [Read the guidelines in CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions to gnlpy are more than welcome. [Read the guidelines in CONTRIBUTING.md](CONTRIBUTING.md).
 Make sure you've [signed the CLA](https://code.facebook.com/cla) before sending in a pull request.
 
 ### Whitehat
